@@ -4,6 +4,10 @@ on:
   issues:
     types: [labeled]
 
+permissions:
+  issues: write
+  contents: read
+
 jobs:
   create-onboarding-issue:
     runs-on: ubuntu-latest

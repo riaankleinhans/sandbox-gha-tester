@@ -6,8 +6,32 @@ async function createOnboardingIssue(github, context, projectName, originalIssue
   const templatePath = path.join(process.cwd(), '.github/ISSUE_TEMPLATE/project-onboarding.md');
   let templateContent = fs.readFileSync(templatePath, 'utf8');
   
-  // Remove YAML front matter
+  // Extract YAML front matter to get assignees and labels
+  const yamlMatch = templateContent.match(/^---\n([\s\S]*?)\n---\n/);
+  let assignees = [];
+  let labels = ['project onboarding', 'sandbox'];
+  
+  if (yamlMatch) {
+    const yamlContent = yamlMatch[1];
+    
+    // Extract assignees
+    const assigneesMatch = yamlContent.match(/^assignees:\s*(.+)$/m);
+    if (assigneesMatch) {
+      assignees = assigneesMatch[1].split(',').map(a => a.trim());
+    }
+    
+    // Extract labels
+    const labelsMatch = yamlContent.match(/^labels:\s*(.+)$/m);
+    if (labelsMatch) {
+      labels = labelsMatch[1].split(',').map(l => l.trim());
+    }
+  }
+  
+  // Remove YAML front matter from content
   templateContent = templateContent.replace(/^---\n[\s\S]*?\n---\n/, '');
+  
+  console.log('Extracted assignees from template:', assignees);
+  console.log('Extracted labels from template:', labels);
   
   // Add reference link at the top after the welcome message
   templateContent = templateContent.replace(
@@ -18,15 +42,15 @@ async function createOnboardingIssue(github, context, projectName, originalIssue
   // Add reference to original issue at the bottom
   templateContent += `\n\n---\n\n**Related Issue:** This onboarding issue was automatically created after the community vote was completed in issue #${originalIssueNumber}.`;
   
-  // Create the onboarding issue
-  const onboardingIssue = await github.rest.issues.create({
-    owner: context.repo.owner,
-    repo: context.repo.repo,
-    title: `[PROJECT ONBOARDING] ${projectName}`,
-    body: templateContent,
-    labels: ['project onboarding', 'sandbox'],
-    assignees: ['caniszczyk', 'idvoretskyi', 'jeefy', 'krook', 'mrbobbytables', 'RobertKielty', 'cynthia-sg', 'lukaszgryglicki', 'riaankleinhans']
-  });
+            // Create the onboarding issue
+            const onboardingIssue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[PROJECT ONBOARDING] ${projectName}`,
+              body: templateContent,
+              labels: labels,
+              assignees: assignees
+            });
   
   console.log('Created onboarding issue:', onboardingIssue.data.number);
   return onboardingIssue.data.number;

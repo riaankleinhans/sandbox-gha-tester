@@ -1,0 +1,16 @@
+# Example file: https://github.com/cncf/gitvote/blob/main/docs/config/.gitvote.yml
+profiles:
+  default:
+    duration: 13w
+    pass_threshold: 30
+    allowed_voters:
+      users:
+        - riaankleinhans
+    close_on_passing: true
+  sandbox:
+    duration: 2w
+    pass_threshold: 30
+    allowed_voters:
+      users:
+        - riaankleinhans
+    close_on_passing: true

@@ -1,0 +1,146 @@
+name: Vote Monitor and Onboarding Automation
+
+on:
+  issues:
+    types: [labeled, unlabeled]
+
+jobs:
+  monitor-vote-completion:
+    runs-on: ubuntu-latest
+    if: |
+      github.event.action == 'labeled' && 
+      contains(github.event.label.name, 'gitvote/closed') && 
+      contains(github.event.label.name, 'gitvote/passed')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get issue details
+        id: issue-details
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const labels = issue.labels.map(label => label.name);
+            
+            // Check if gitvote/open was removed (it should not be present)
+            const hasOpenLabel = labels.includes('gitvote/open');
+            
+            // Check if both gitvote/closed and gitvote/passed are present
+            const hasClosedLabel = labels.includes('gitvote/closed');
+            const hasPassedLabel = labels.includes('gitvote/passed');
+            
+            // Only proceed if gitvote/open is not present and both closed/passed are present
+            if (hasOpenLabel || !hasClosedLabel || !hasPassedLabel) {
+              console.log('Vote conditions not met. Skipping automation.');
+              return;
+            }
+            
+            // Extract project name from issue title
+            const title = issue.title;
+            const sandboxMatch = title.match(/^\[Sandbox\]\s*(.+)$/);
+            const projectName = sandboxMatch ? sandboxMatch[1].trim() : 'Unknown Project';
+            
+            console.log('Vote conditions met. Project name:', projectName);
+            
+            return {
+              projectName,
+              issueNumber: issue.number,
+              issueTitle: issue.title
+            };
+
+      - name: Create onboarding issue
+        id: create-onboarding
+        if: steps.issue-details.outputs.projectName != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { createOnboardingIssue } = require('./scripts/create-onboarding-issue.js');
+            const projectName = '${{ steps.issue-details.outputs.projectName }}';
+            const originalIssueNumber = '${{ steps.issue-details.outputs.issueNumber }}';
+            
+            const onboardingIssueNumber = await createOnboardingIssue(github, context, projectName, originalIssueNumber);
+            return onboardingIssueNumber;
+
+      - name: Comment on original issue and close
+        if: steps.create-onboarding.outputs.result != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { commentAndClose } = require('./scripts/create-onboarding-issue.js');
+            const originalIssueNumber = '${{ steps.issue-details.outputs.issueNumber }}';
+            const onboardingIssueNumber = '${{ steps.create-onboarding.outputs.result }}';
+            const projectName = '${{ steps.issue-details.outputs.projectName }}';
+            
+            await commentAndClose(github, context, originalIssueNumber, onboardingIssueNumber, projectName);
+
+  monitor-vote-open-removal:
+    runs-on: ubuntu-latest
+    if: |
+      github.event.action == 'unlabeled' && 
+      github.event.label.name == 'gitvote/open'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check issue labels after gitvote/open removal
+        id: check-labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const labels = issue.labels.map(label => label.name);
+            
+            // Check if both gitvote/closed and gitvote/passed are present
+            const hasClosedLabel = labels.includes('gitvote/closed');
+            const hasPassedLabel = labels.includes('gitvote/passed');
+            
+            console.log('Current labels:', labels);
+            console.log('Has gitvote/closed:', hasClosedLabel);
+            console.log('Has gitvote/passed:', hasPassedLabel);
+            
+            // Only proceed if both closed/passed are present
+            if (!hasClosedLabel || !hasPassedLabel) {
+              console.log('Vote conditions not met. Skipping automation.');
+              return;
+            }
+            
+            // Extract project name from issue title
+            const title = issue.title;
+            const sandboxMatch = title.match(/^\[Sandbox\]\s*(.+)$/);
+            const projectName = sandboxMatch ? sandboxMatch[1].trim() : 'Unknown Project';
+            
+            console.log('Vote conditions met after gitvote/open removal. Project name:', projectName);
+            
+            return {
+              projectName,
+              issueNumber: issue.number,
+              issueTitle: issue.title
+            };
+
+      - name: Create onboarding issue (from unlabeled trigger)
+        id: create-onboarding-unlabeled
+        if: steps.check-labels.outputs.projectName != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { createOnboardingIssue } = require('./scripts/create-onboarding-issue.js');
+            const projectName = '${{ steps.check-labels.outputs.projectName }}';
+            const originalIssueNumber = '${{ steps.check-labels.outputs.issueNumber }}';
+            
+            const onboardingIssueNumber = await createOnboardingIssue(github, context, projectName, originalIssueNumber);
+            return onboardingIssueNumber;
+
+      - name: Comment on original issue and close (from unlabeled trigger)
+        if: steps.create-onboarding-unlabeled.outputs.result != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { commentAndClose } = require('./scripts/create-onboarding-issue.js');
+            const originalIssueNumber = '${{ steps.check-labels.outputs.issueNumber }}';
+            const onboardingIssueNumber = '${{ steps.create-onboarding-unlabeled.outputs.result }}';
+            const projectName = '${{ steps.check-labels.outputs.projectName }}';
+            
+            await commentAndClose(github, context, originalIssueNumber, onboardingIssueNumber, projectName);

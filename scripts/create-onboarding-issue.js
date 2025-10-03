@@ -58,8 +58,8 @@ Good luck with your project's journey in the CNCF! 🚀`
     state: 'closed'
   });
   
-  console.log(`Commented on issue #${originalIssueNumber} and closed it`);
-  console.log(`Created onboarding issue #${onboardingIssueNumber}`);
+  console.log(`✅ Commented on issue #${originalIssueNumber} and closed it`);
+  console.log(`✅ Created onboarding issue #${onboardingIssueNumber}`);
 }
 
 module.exports = {

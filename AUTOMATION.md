@@ -13,25 +13,24 @@ The automation watches for issues with the `[Sandbox] Project Name` format and m
 
 ## Trigger Conditions
 
-The automation is triggered when **both** of the following conditions are met:
+The automation is **simple and focused** - it only triggers when the vote passes:
 
-### Condition 1: Labels Added
-- `gitvote/closed` label is added to an issue
-- `gitvote/passed` label is added to an issue
+### Single Trigger Condition
+- **Triggers only when**: `gitvote/passed` label is added to an issue
+- **That's it!** No complex conditions or multiple scenarios to worry about
 
-### Condition 2: Label Removed
-- `gitvote/open` label is removed from an issue
-- `gitvote/closed` label is present
-- `gitvote/passed` label is present
-
-The automation handles both scenarios to ensure it triggers regardless of whether the `gitvote/open` label is removed before or after the other labels are added.
+### Why This Works
+- ✅ **Simple logic** - One label, one trigger, one action
+- ✅ **Reliable** - Gitvote only adds this label when the vote actually passes
+- ✅ **Efficient** - Only runs when it needs to
+- ✅ **Easy to understand** - No complex state checking required
 
 ## Workflow Files
 
 ### Main Automation
 - **File**: `.github/workflows/vote-monitor.yml`
-- **Triggers**: `issues.labeled` and `issues.unlabeled` events
-- **Purpose**: Monitors issue labels and executes the automation logic
+- **Triggers**: `issues.labeled` event (only when `gitvote/passed` label is added)
+- **Purpose**: Creates onboarding issue when community vote passes
 
 ### Test Workflow
 - **File**: `.github/workflows/test-vote-automation.yml`
@@ -101,8 +100,8 @@ To test the automation:
 
 1. **Initial Issue**: `[Sandbox] My Awesome Project` is created
 2. **Voting Process**: Community votes using Gitvote app
-3. **Vote Completion**: Gitvote adds `gitvote/closed` and `gitvote/passed`, removes `gitvote/open`
-4. **Automation Trigger**: Workflow detects the label changes
+3. **Vote Passes**: Gitvote adds `gitvote/passed` label
+4. **Automation Trigger**: Workflow detects the `gitvote/passed` label
 5. **Onboarding Issue**: `[PROJECT ONBOARDING] My Awesome Project` is created
 6. **Comment**: Original issue receives congratulations comment with link
 7. **Closure**: Original issue is closed

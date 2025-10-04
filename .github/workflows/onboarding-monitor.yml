@@ -1,0 +1,48 @@
+name: Onboarding Progress Monitor
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      check_all:
+        description: 'Check all onboarding issues regardless of age'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  monitor-onboarding-progress:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Monitor onboarding progress
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { monitorOnboardingProgress } = require('./scripts/onboarding-progress-monitor.js');
+            
+            // For manual dispatch, use the input value
+            // For scheduled runs, default to checking all issues for initial deployment
+            const checkAll = context.payload.inputs?.check_all === 'true' || 
+                           (context.eventName === 'schedule' && !context.payload.inputs);
+            
+            console.log('🔍 Starting onboarding progress monitoring...');
+            console.log('Event:', context.eventName);
+            console.log('Check all issues:', checkAll);
+            
+            if (checkAll) {
+              console.log('📋 INITIAL DEPLOYMENT MODE: Processing all onboarding issues regardless of existing labels');
+            } else {
+              console.log('🔄 REGULAR MONITORING MODE: Skipping issues with existing labels');
+            }
+            
+            await monitorOnboardingProgress(github, context, checkAll);

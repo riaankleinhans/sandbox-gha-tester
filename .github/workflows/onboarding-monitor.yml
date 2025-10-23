@@ -17,6 +17,16 @@ on:
         required: false
         type: boolean
         default: false
+      test_mode:
+        description: 'Enable test mode (simulate older issues)'
+        required: false
+        type: boolean
+        default: false
+      test_offset_days:
+        description: 'Days to add to current date in test mode (e.g., 305 for 10 months)'
+        required: false
+        type: string
+        default: '305'
 
 permissions:
   issues: write
@@ -40,6 +50,8 @@ jobs:
         uses: actions/github-script@v7
         env:
           MONITOR_TOKEN: ${{ secrets.ONBOARDING_MONITOR_TOKEN }}
+          TEST_MODE: ${{ github.event.inputs.test_mode }}
+          TEST_AGE_OFFSET_DAYS: ${{ github.event.inputs.test_offset_days }}
         with:
           github-token: ${{ secrets.ONBOARDING_MONITOR_TOKEN }}
           script: |

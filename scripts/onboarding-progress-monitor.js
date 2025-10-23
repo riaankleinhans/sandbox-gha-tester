@@ -9,6 +9,17 @@ const path = require('path');
 function getTimeSinceCreation(createdAt) {
   const now = new Date();
   const created = new Date(createdAt);
+  
+  // Test mode: Add offset to simulate older issues
+  const testMode = process.env.TEST_MODE === 'true';
+  const testOffsetDays = parseInt(process.env.TEST_AGE_OFFSET_DAYS || '0');
+  
+  if (testMode && testOffsetDays > 0) {
+    // In test mode, add offset days to simulate older issues
+    now.setDate(now.getDate() + testOffsetDays);
+    console.log(`🧪 TEST MODE: Simulating ${testOffsetDays} days older (${now.toISOString()})`);
+  }
+  
   const diffMs = now - created;
   
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -369,6 +380,17 @@ async function checkRateLimit(github) {
  */
 async function monitorOnboardingProgress(github, context, checkAll = false) {
   try {
+    // Check if we're in test mode
+    const testMode = process.env.TEST_MODE === 'true';
+    const testOffsetDays = parseInt(process.env.TEST_AGE_OFFSET_DAYS || '0');
+    
+    if (testMode) {
+      console.log('🧪 TEST MODE ENABLED');
+      console.log(`   Age offset: ${testOffsetDays} days`);
+      console.log(`   This will simulate issues being ${testOffsetDays} days older`);
+      console.log(`   Use TEST_AGE_OFFSET_DAYS environment variable to adjust`);
+    }
+    
     // Check rate limit before starting
     await checkRateLimit(github);
     

@@ -1,0 +1,22 @@
+{
+  "name": "sandbox-gha-tester",
+  "version": "1.0.0",
+  "description": "GitHub Actions automation for CNCF Sandbox onboarding process",
+  "scripts": {
+    "test": "node scripts/test-health-issue-format.js",
+    "setup-test-issues": "node scripts/setup-test-issues.js"
+  },
+  "dependencies": {
+    "@octokit/rest": "^20.0.2"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "github-actions",
+    "cncf",
+    "sandbox",
+    "automation",
+    "onboarding"
+  ],
+  "author": "CNCF Staff",
+  "license": "Apache-2.0"
+}

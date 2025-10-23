@@ -160,76 +160,122 @@ function createComment(timeInfo, actionInfo, projectName) {
 
 /**
  * Create a health issue in the TOC repository using the proper project-health.yaml template
+ * This matches the structure defined in https://github.com/cncf/toc/blob/main/.github/ISSUE_TEMPLATE/project-health.yaml
+ * 
  * @param {Object} github - GitHub API client
  * @param {Object} context - GitHub context
  * @param {string} projectName - Name of the project
  * @param {number} onboardingIssueNumber - Number of the onboarding issue
+ * @param {number} monthsInOnboarding - How many months the project has been in onboarding
  * @returns {Promise<number>} Health issue number
  */
-async function createHealthIssue(github, context, projectName, onboardingIssueNumber) {
-  // Use the proper CNCF TOC project-health.yaml template format
-  const healthIssueBody = `**Purpose of This Issue**
+async function createHealthIssue(github, context, projectName, onboardingIssueNumber, monthsInOnboarding = 10) {
+  // Calculate remaining time until archival (12 months total)
+  const remainingMonths = 12 - monthsInOnboarding;
+  const onboardingIssueUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/issues/${onboardingIssueNumber}`;
+  
+  // Format the issue body to match the project-health.yaml template structure
+  // Note: When creating via API, we format as if manually filling out the form
+  const healthIssueBody = `### Purpose of This Issue
 
 This Project Health Issue has been filed to ascertain the current activity and health of the project so the TOC may identify the appropriate support and guidance for the project to return to an optimal state of health or determination of archival.
 
-It is intended to **initiate a public discussion to seek understanding** and define a path forward. Perceptions or commentary counter to this are not constructive for the project or the community. 
+It is intended to **initiate a public discussion to seek understanding** and define a path forward. Perceptions or commentary counter to this are not constructive for the project or the community.
 
 Should maintainers have sensitive, confidential, or private factors and concerns that influence or affect the project, they are encouraged to contact the TOC directly through CNCF Staff, the private-toc mailing list, Slack, or email.
 
 ---
 
-## Project name
+### Project name
+
 ${projectName}
 
-## Project Issue Link
-https://github.com/${context.repo.owner}/${context.repo.repo}/issues/${onboardingIssueNumber}
+### Project Issue Link
 
-## Concern
-This sandbox project has been in the onboarding process for 10+ months and is approaching the automatic archival deadline. The project has not completed the required onboarding tasks within the expected timeframe, which may indicate:
+${onboardingIssueUrl}
 
+### Concern
+
+This sandbox project has been in the onboarding process for **${monthsInOnboarding}+ months** and is approaching the automatic archival deadline. The project has not completed the required onboarding tasks within the expected timeframe.
+
+**Potential Indicators:**
 - Lack of active maintainer engagement
-- Insufficient resources to complete onboarding
+- Insufficient resources to complete onboarding requirements
 - Project may no longer be actively maintained
-- Need for additional support or guidance
+- Need for additional support or guidance from CNCF staff
 
 **Timeline:**
-- **Current:** 10+ months in onboarding process
-- **Deadline:** 12 months (automatic archival)
-- **Remaining:** ~2 months
+- **Current Status:** ${monthsInOnboarding}+ months in onboarding process
+- **Archival Deadline:** 12 months from onboarding issue creation
+- **Time Remaining:** ~${remainingMonths} month(s)
 
-**Onboarding Issue:** [#${onboardingIssueNumber}](https://github.com/${context.repo.owner}/${context.repo.repo}/issues/${onboardingIssueNumber})
+**Onboarding Issue:** [#${onboardingIssueNumber}](${onboardingIssueUrl})
 
-**Automated Monitoring:** This health issue was automatically created by the CNCF onboarding progress monitor when the project reached the 10-month milestone.
+**Automated Detection:** This health issue was automatically created by the CNCF onboarding progress monitoring system when the project reached the ${monthsInOnboarding}-month milestone, as part of proactive intervention before automatic archival.
 
-## Prior engagement
-This is an automated health check triggered by the onboarding progress monitoring system. No prior TOC engagement has been initiated for this specific onboarding delay.
+**Recent Activity:**
+Please review the onboarding issue for the current status of completion checklist items and any recent maintainer updates.
 
-## Additional Information
-The CNCF onboarding progress monitor automatically tracks sandbox project onboarding progress and creates health issues for projects that have been in the onboarding process for 10+ months. This ensures timely intervention before automatic archival occurs.
+### Prior engagement
 
-**Next Steps:**
-- Contact project maintainers to assess current status
-- Determine if additional support is needed
-- Evaluate if extension is warranted
-- Provide guidance for completing onboarding tasks
+This is an automated health check triggered by the onboarding progress monitoring system. 
+
+Prior to this health issue:
+- **3 months:** Automated reminder with \`onboarding/incomplete\` label
+- **6 months:** Automated alert with \`onboarding/stale\` label + TOC/projects team notification
+- **9 months:** Automated warning with \`onboarding/warning\` label + TOC/projects team notification
+- **10 months:** This health issue created with \`onboarding/approaching-archival\` label
+
+No direct TOC engagement has been initiated for this specific onboarding delay beyond automated monitoring.
+
+### Additional Information
+
+**About the Automated Monitor:**
+
+The CNCF onboarding progress monitor automatically tracks sandbox project onboarding progress and creates health issues for projects that have been in the onboarding process for 10+ months. This ensures timely TOC awareness and intervention opportunity before automatic archival occurs at the 12-month mark.
+
+**Suggested Next Steps for TOC:**
+1. Review the onboarding issue to assess current completion status
+2. Contact project maintainers to understand any blockers or challenges
+3. Determine if the project requires additional CNCF staff support
+4. Evaluate if a deadline extension is warranted based on circumstances
+5. Provide specific guidance for completing remaining onboarding tasks
+6. Assess project's continued alignment with sandbox requirements
+
+**Automated Actions Already Taken:**
+- Progressive labels applied at 3, 6, 9, and 10-month milestones
+- Automated comments with reminders at each milestone
+- TOC/projects team tagged at 6 and 9-month marks
+- Weekly warnings scheduled to begin at 11 months
+- Daily warnings scheduled for the final week before archival
+
+**If No Action Taken:**
+- **11 months:** Weekly warnings will be posted (weeks 1-3), then daily warnings (week 4)
+- **12 months:** Project will be automatically archived, onboarding issue closed, and this health issue updated
 
 ---
-*This health issue was automatically created by the CNCF onboarding progress monitor.*`;
+
+*This health issue was automatically created by the [CNCF Sandbox Onboarding Progress Monitor](https://github.com/cncf/sandbox). For questions about this automation, please contact CNCF staff or open an issue in the sandbox repository.*`;
 
   try {
     const healthIssue = await github.rest.issues.create({
       owner: 'cncf',
       repo: 'toc',
-      title: `[HEALTH]: ${projectName} - Onboarding Deadline Approaching`,
+      title: `[HEALTH]: ${projectName} - Onboarding Deadline Approaching (${monthsInOnboarding}+ Months)`,
       body: healthIssueBody,
-      labels: ['needs-triage', 'toc', 'kind/review', 'review/health'],
-      assignees: ['riaankleinhans'] // Update with actual TOC members
+      labels: ['needs-triage', 'toc', 'kind/review', 'review/health']
+      // Note: Not adding assignees automatically - let TOC triage process handle assignment
     });
     
     console.log(`✅ Created health issue #${healthIssue.data.number} in cncf/toc`);
+    console.log(`   URL: https://github.com/cncf/toc/issues/${healthIssue.data.number}`);
     return healthIssue.data.number;
   } catch (error) {
-    console.error('❌ Failed to create health issue:', error.message);
+    console.error('❌ Failed to create health issue in cncf/toc:', error.message);
+    if (error.response) {
+      console.error('   Response status:', error.response.status);
+      console.error('   Response data:', JSON.stringify(error.response.data, null, 2));
+    }
     return null;
   }
 }
@@ -283,6 +329,39 @@ function shouldSkipIssue(issue, actionInfo, checkAll = false) {
 }
 
 /**
+ * Sleep helper for rate limiting
+ * @param {number} ms - Milliseconds to sleep
+ * @returns {Promise}
+ */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Check GitHub API rate limit and log status
+ * @param {Object} github - GitHub API client
+ */
+async function checkRateLimit(github) {
+  try {
+    const rateLimit = await github.rest.rateLimit.get();
+    const remaining = rateLimit.data.rate.remaining;
+    const limit = rateLimit.data.rate.limit;
+    const reset = new Date(rateLimit.data.rate.reset * 1000);
+    
+    console.log(`📊 API Rate Limit: ${remaining}/${limit} remaining (resets at ${reset.toISOString()})`);
+    
+    if (remaining < 100) {
+      console.warn(`⚠️  Warning: Low API rate limit remaining (${remaining})`);
+    }
+    
+    return { remaining, limit, reset };
+  } catch (error) {
+    console.warn('⚠️  Could not check rate limit:', error.message);
+    return null;
+  }
+}
+
+/**
  * Main function to monitor onboarding progress
  * @param {Object} github - GitHub API client
  * @param {Object} context - GitHub context
@@ -290,15 +369,21 @@ function shouldSkipIssue(issue, actionInfo, checkAll = false) {
  */
 async function monitorOnboardingProgress(github, context, checkAll = false) {
   try {
+    // Check rate limit before starting
+    await checkRateLimit(github);
+    
     // Get all open issues with onboarding labels
+    // Note: Onboarding issues MUST have title format: [PROJECT ONBOARDING] {project name}
+    // and labels: 'project onboarding' and 'sandbox'
     const issues = await github.rest.issues.listForRepo({
       owner: context.repo.owner,
       repo: context.repo.repo,
       state: 'open',
-      labels: 'project onboarding,sandbox'
+      labels: 'project onboarding,sandbox',
+      per_page: 100
     });
     
-    console.log(`Found ${issues.data.length} onboarding issues to check`);
+    console.log(`Found ${issues.data.length} issues with onboarding labels to check`);
     
     if (checkAll) {
       console.log('🚀 INITIAL DEPLOYMENT: Will process all issues regardless of existing labels');
@@ -310,13 +395,22 @@ async function monitorOnboardingProgress(github, context, checkAll = false) {
     for (const issue of issues.data) {
       try {
         // Extract project name from issue title
+        // IMPORTANT: Onboarding issues MUST have title format: [PROJECT ONBOARDING] {project name}
         const titleMatch = issue.title.match(/^\[PROJECT ONBOARDING\]\s*(.+)$/);
         if (!titleMatch) {
-          console.log(`⚠️  Skipping issue #${issue.number} - not an onboarding issue`);
+          console.log(`⚠️  Skipping issue #${issue.number} - title doesn't match [PROJECT ONBOARDING] format`);
+          console.log(`   Title: "${issue.title}"`);
           continue;
         }
         
         const projectName = titleMatch[1].trim();
+        
+        // Validate we extracted a project name
+        if (!projectName || projectName.length === 0) {
+          console.log(`⚠️  Skipping issue #${issue.number} - could not extract project name from title`);
+          console.log(`   Title: "${issue.title}"`);
+          continue;
+        }
         const timeInfo = getTimeSinceCreation(issue.created_at);
         const actionInfo = getProgressAction(timeInfo);
         
@@ -359,16 +453,17 @@ async function monitorOnboardingProgress(github, context, checkAll = false) {
         
         // Handle special actions
         if (actionInfo.action === 'create_health_issue') {
-          const healthIssueNumber = await createHealthIssue(github, context, projectName, issue.number);
+          const healthIssueNumber = await createHealthIssue(github, context, projectName, issue.number, timeInfo.months);
           if (healthIssueNumber) {
-            // Update the comment to include health issue reference
-            const updatedComment = comment + `\n\n**Health Issue Created:** [#${healthIssueNumber}](https://github.com/cncf/toc/issues/${healthIssueNumber})`;
+            // Add a comment with the health issue reference
+            const healthIssueComment = `\n\n---\n\n**🏥 Health Issue Created in TOC Repository**\n\nA health issue has been created for TOC review: [cncf/toc#${healthIssueNumber}](https://github.com/cncf/toc/issues/${healthIssueNumber})\n\nThe TOC will review this issue and may reach out to maintainers to assess the current status and provide support.`;
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issue.number,
-              body: updatedComment
+              body: healthIssueComment
             });
+            console.log(`   ✅ Added health issue reference comment to onboarding issue`);
           }
         }
         
@@ -388,28 +483,98 @@ async function monitorOnboardingProgress(github, context, checkAll = false) {
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: issue.number,
-            state: 'closed'
+            state: 'closed',
+            state_reason: 'not_planned'
           });
           
           console.log(`   ✅ Closed onboarding issue`);
           
-          // Comment on health issue if it exists
-          // Note: This would require tracking health issue numbers
-          // For now, we'll just log that this should be done
-          console.log(`   📝 Note: Should comment on health issue in TOC repo`);
+          // Try to find and update the health issue in the TOC repo
+          try {
+            // Search for health issues mentioning this onboarding issue
+            const searchQuery = `repo:cncf/toc is:issue is:open label:review/health "${projectName}" in:title`;
+            const searchResults = await github.rest.search.issuesAndPullRequests({
+              q: searchQuery,
+              sort: 'created',
+              order: 'desc',
+              per_page: 5
+            });
+            
+            if (searchResults.data.total_count > 0) {
+              const healthIssue = searchResults.data.items[0];
+              
+              const archivalComment = `## 🗄️ Project Archived - Onboarding Incomplete
+
+This health issue is being updated as the associated onboarding process has reached the 12-month deadline without completion.
+
+**Onboarding Issue:** [cncf/sandbox#${issue.number}](https://github.com/${context.repo.owner}/${context.repo.repo}/issues/${issue.number}) - **CLOSED**
+
+**Action Taken:**
+- ✅ Applied \`onboarding/archived\` label to onboarding issue
+- ✅ Closed onboarding issue
+- ✅ Automated monitoring cycle completed
+
+**Status:**
+The project has been automatically archived due to exceeding the 12-month onboarding timeline. The onboarding requirements were not completed within the allocated timeframe.
+
+**Next Steps:**
+The TOC may choose to:
+1. Close this health issue if no further action is needed
+2. Reach out to maintainers for a final status update
+3. Determine if the project should be allowed to reapply in the future
+
+If the project wishes to rejoin the CNCF Sandbox in the future, they will need to submit a new application through the standard process.
+
+---
+*This update was automatically posted by the CNCF Sandbox Onboarding Progress Monitor.*`;
+              
+              await github.rest.issues.createComment({
+                owner: 'cncf',
+                repo: 'toc',
+                issue_number: healthIssue.number,
+                body: archivalComment
+              });
+              
+              console.log(`   ✅ Updated health issue cncf/toc#${healthIssue.number}`);
+            } else {
+              console.log(`   ⚠️  No matching health issue found in TOC repo`);
+            }
+          } catch (searchError) {
+            console.error(`   ⚠️  Failed to update health issue: ${searchError.message}`);
+            // Don't fail the whole process if we can't update the health issue
+          }
         }
         
         console.log(`   ✅ Completed processing issue #${issue.number}`);
         
       } catch (error) {
         console.error(`❌ Error processing issue #${issue.number}:`, error.message);
+        if (error.response) {
+          console.error(`   HTTP Status: ${error.response.status}`);
+          if (error.response.status === 403) {
+            console.error('   This may be a rate limit error. Consider slowing down or waiting.');
+          }
+        }
+        // Continue processing other issues even if one fails
+      }
+      
+      // Add a small delay between issues to avoid rate limiting
+      if (issues.data.length > 10) {
+        await sleep(1000); // 1 second delay between issues
       }
     }
     
     console.log('🎉 Onboarding progress monitoring completed');
     
+    // Check final rate limit status
+    await checkRateLimit(github);
+    
   } catch (error) {
     console.error('❌ Error in onboarding progress monitoring:', error.message);
+    if (error.response) {
+      console.error('   HTTP Status:', error.response.status);
+      console.error('   Response:', JSON.stringify(error.response.data, null, 2));
+    }
     throw error;
   }
 }
@@ -419,5 +584,7 @@ module.exports = {
   getTimeSinceCreation,
   getProgressAction,
   createComment,
-  createHealthIssue
+  createHealthIssue,
+  checkRateLimit,
+  sleep
 };

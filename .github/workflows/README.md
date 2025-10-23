@@ -1,10 +1,34 @@
-# Onboarding Progress Monitor
+# CNCF Sandbox Automation Workflows
 
-Automated GitHub Action that monitors sandbox project onboarding progress and creates health issues in the TOC repository when projects approach the archival deadline.
+This directory contains GitHub Actions workflows for automating the CNCF Sandbox application and onboarding process.
+
+## Workflows Overview
+
+### 1. Vote Monitor (vote-monitor.yml)
+
+Automatically creates onboarding issues when sandbox applications pass community voting.
+
+**How It Works:**
+1. **Trigger:** When `gitvote/passed` label is added to an application issue
+2. **Action:** Creates a new onboarding issue using the project-onboarding.md template
+3. **Result:** Comments on original application issue and closes it
+
+**Files:**
+- `.github/workflows/vote-monitor.yml` - Workflow definition
+- `scripts/create-onboarding-issue.js` - Creation logic
+- `.github/ISSUE_TEMPLATE/project-onboarding.md` - Onboarding template
+
+**Testing:** Add the `gitvote/passed` label to any `[Sandbox] Project Name` issue.
 
 ---
 
-## Quick Start
+### 2. Onboarding Progress Monitor (onboarding-monitor.yml)
+
+Automated monitoring of sandbox project onboarding progress. Creates health issues in the TOC repository when projects approach the archival deadline.
+
+---
+
+## Quick Start (Onboarding Monitor)
 
 **For Deployment:** Jump to [Deployment Steps](#deployment-steps)  
 **For Troubleshooting:** See [Troubleshooting](#troubleshooting)

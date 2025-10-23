@@ -83,6 +83,20 @@ Onboarding Issue Created
 | **11 months** (week 4) | `onboarding/approaching-archival` | Daily warnings |
 | **12 months** | `onboarding/archived` | Close onboarding + update health issue |
 
+### Timeline Extension Label
+
+**Label:** `onboarding/extended`
+
+Apply this label to onboarding issues where CNCF staff has granted a timeline extension. Issues with this label will be **completely skipped** by the workflow - no labels added, no comments posted, no health issues created.
+
+**Use When:**
+- Project has valid reason for delayed onboarding
+- Extension agreed upon with CNCF staff
+- Project needs more time beyond the standard 12-month timeline
+
+**To Resume Monitoring:**
+Remove the `onboarding/extended` label and the workflow will resume checking the issue on the next run.
+
 ### Health Issue Details
 
 **Created:** At 10-month milestone  

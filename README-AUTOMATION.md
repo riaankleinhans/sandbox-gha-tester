@@ -36,6 +36,9 @@ Tracks the progress of sandbox onboarding issues and automatically escalates war
 - **11 months** → Weekly warnings (weeks 1-3), then daily warnings (week 4)
 - **1 year** → `onboarding/archived` label + close onboarding + comment on health issue
 
+**Timeline Extension:**
+- Add `onboarding/extended` label to pause monitoring for issues where CNCF staff has granted a timeline extension
+
 **Files:**
 - `.github/workflows/onboarding-monitor.yml` - Main monitoring workflow
 - `scripts/onboarding-progress-monitor.js` - Progress tracking logic

@@ -183,7 +183,7 @@ This Project Health Issue has been filed to ascertain the current activity and h
 
 It is intended to **initiate a public discussion to seek understanding** and define a path forward. Perceptions or commentary counter to this are not constructive for the project or the community.
 
-Should maintainers have sensitive, confidential, or private factors and concerns that influence or affect the project, they are encouraged to contact the TOC directly through CNCF Staff, the private-toc mailing list, Slack, or email.
+Should maintainers have sensitive, confidential, or private factors and concerns that influence or affect the project, they are encouraged to contact the TOC or TOC Staff directly via Slack, or email.
 
 ---
 
@@ -191,7 +191,7 @@ Should maintainers have sensitive, confidential, or private factors and concerns
 
 ${projectName}
 
-### Project Issue Link
+### Project On-boarding issue
 
 ${onboardingIssueUrl}
 

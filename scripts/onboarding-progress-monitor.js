@@ -493,7 +493,7 @@ async function monitorOnboardingProgress(github, context, checkAll = false) {
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: issue.number,
-            assignees: ['riaankleinhans'] // Update with actual TOC members
+            assignees: [] // Add TOC member usernames here when deploying
           });
         }
         

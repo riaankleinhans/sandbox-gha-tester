@@ -1,4 +1,4 @@
-name: Onboarding Progress Monitor
+name: sandbox-onboarding-timeline-check
 
 # This workflow monitors sandbox project onboarding issues and applies progressive
 # warnings based on how long they've been open. It creates health issues in the TOC

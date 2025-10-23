@@ -95,9 +95,9 @@ function createComment(timeInfo, actionInfo, projectName) {
     comment += `- Complete all remaining onboarding tasks\n`;
     comment += `- Contact CNCF staff if you need assistance\n`;
     comment += `- Update this issue with your progress\n\n`;
-    comment += `**Next Steps:**\n`;
+    comment += `**Timeline:**\n`;
     comment += `- Tomorrow: Another daily warning\n`;
-    comment += `- In ${30 - (days % 30)} days: Automatic archival\n\n`;
+    comment += `- If all tasks are not completed in the next ${30 - (days % 30)} days: Automatic archival\n\n`;
     comment += `---\n*This is an automated daily warning from the CNCF onboarding progress monitor.*`;
     
   } else if (actionInfo.action === 'weekly_warning') {
@@ -110,7 +110,7 @@ function createComment(timeInfo, actionInfo, projectName) {
     comment += `**Timeline:**\n`;
     comment += `- Next week: Another weekly warning\n`;
     comment += `- Week 4: Daily warnings will begin\n`;
-    comment += `- In ${365 - days} days: Automatic archival\n\n`;
+    comment += `- If all tasks are not completed in the next ${365 - days} days: Automatic archival\n\n`;
     comment += `---\n*This is an automated weekly warning from the CNCF onboarding progress monitor.*`;
     
   } else if (actionInfo.action === 'create_health_issue') {
@@ -121,9 +121,10 @@ function createComment(timeInfo, actionInfo, projectName) {
     comment += `- ✅ Created health issue in TOC repository for visibility\n\n`;
     comment += `**Next Steps:**\n`;
     comment += `- Complete all remaining onboarding tasks\n`;
-    comment += `- Contact CNCF staff immediately if assistance is needed\n`;
+    comment += `- Contact CNCF staff immediately if assistance is needed\n\n`;
+    comment += `**Timeline:**\n`;
     comment += `- In 1 month: Weekly warnings will begin\n`;
-    comment += `- In 2 months: Automatic archival\n\n`;
+    comment += `- If all tasks are not completed in the next 2 months: Automatic archival\n\n`;
     comment += `---\n*This is an automated alert from the CNCF onboarding progress monitor.*`;
     
   } else if (actionInfo.action === 'tag_teams') {
@@ -137,8 +138,8 @@ function createComment(timeInfo, actionInfo, projectName) {
     comment += `- Contact CNCF staff if assistance is needed\n`;
     comment += `- Update this issue with progress\n\n`;
     comment += `**Timeline:**\n`;
-    comment += `- In ${3 - (months % 3)} months: Health issue will be created\n`;
-    comment += `- In ${6 - (months % 6)} months: Automatic archival\n\n`;
+    comment += `- If all tasks are not completed in the next ${3 - (months % 3)} months: Health issue will be created\n`;
+    comment += `- If all tasks are not completed in the next ${6 - (months % 6)} months: Automatic archival\n\n`;
     comment += `---\n*This is an automated alert from the CNCF onboarding progress monitor.*`;
     
   } else {
@@ -150,8 +151,8 @@ function createComment(timeInfo, actionInfo, projectName) {
     comment += `- Contact CNCF staff if assistance is needed\n`;
     comment += `- Update this issue with progress\n\n`;
     comment += `**Timeline:**\n`;
-    comment += `- In ${3 - (months % 3)} months: TOC team will be tagged\n`;
-    comment += `- In ${9 - months} months: Automatic archival\n\n`;
+    comment += `- If all tasks are not completed in the next ${3 - (months % 3)} months: TOC team will be tagged\n`;
+    comment += `- If all tasks are not completed in the next ${9 - months} months: Automatic archival\n\n`;
     comment += `---\n*This is an automated reminder from the CNCF onboarding progress monitor.*`;
   }
   
@@ -182,7 +183,7 @@ This Project Health Issue has been filed to ascertain the current activity and h
 
 It is intended to **initiate a public discussion to seek understanding** and define a path forward. Perceptions or commentary counter to this are not constructive for the project or the community.
 
-Should maintainers have sensitive, confidential, or private factors and concerns that influence or affect the project, they are encouraged to contact the TOC directly through CNCF Staff, the private-toc mailing list, Slack, or email.
+Should maintainers have sensitive, confidential, or private factors and concerns that influence or affect the project, they are encouraged to contact the TOC or TOC Staff directly via Slack, or email.
 
 ---
 
@@ -190,7 +191,7 @@ Should maintainers have sensitive, confidential, or private factors and concerns
 
 ${projectName}
 
-### Project Issue Link
+### Project On-boarding issue
 
 ${onboardingIssueUrl}
 
@@ -411,6 +412,25 @@ async function monitorOnboardingProgress(github, context, checkAll = false) {
           console.log(`   Title: "${issue.title}"`);
           continue;
         }
+        
+        // Check if issue has the extension/exception label
+        const issueLabels = issue.labels.map(label => label.name);
+        if (issueLabels.includes('onboarding/extended')) {
+          console.log(`⏸️  Skipping issue #${issue.number} - has onboarding/extended label`);
+          console.log(`   Project has been granted a timeline extension by CNCF staff`);
+          continue;
+        }
+        
+        // Only process issues created after October 1, 2025
+        const cutoffDate = new Date('2025-10-01T00:00:00Z');
+        const createdDate = new Date(issue.created_at);
+        
+        if (createdDate < cutoffDate) {
+          console.log(`⏭️  Skipping issue #${issue.number} - created before October 1, 2025`);
+          console.log(`   Created: ${createdDate.toISOString().split('T')[0]}`);
+          continue;
+        }
+        
         const timeInfo = getTimeSinceCreation(issue.created_at);
         const actionInfo = getProgressAction(timeInfo);
         
@@ -483,8 +503,7 @@ async function monitorOnboardingProgress(github, context, checkAll = false) {
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: issue.number,
-            state: 'closed',
-            state_reason: 'not_planned'
+            state: 'closed'
           });
           
           console.log(`   ✅ Closed onboarding issue`);
